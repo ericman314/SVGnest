@@ -1,0 +1,23 @@
+{
+  "name": "svgnest",
+  "version": "1.0.0",
+  "description": "**SVGNest**: A browser-based vector nesting tool.",
+  "main": "run-demo.mjs",
+  "dependencies": {
+    "dxf": "^4.2.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ericman314/SVGnest.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ericman314/SVGnest/issues"
+  },
+  "homepage": "https://github.com/ericman314/SVGnest#readme"
+}

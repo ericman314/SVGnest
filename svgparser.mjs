@@ -4,10 +4,9 @@
  * Licensed under the MIT license
  */
  
- (function(root){
-	'use strict';
-	
-	function SvgParser(){
+export default class SvgParser {
+
+  constructor () {
 		// the SVG document
 		this.svg;
 		
@@ -22,11 +21,11 @@
 		}; 
 	}
 	
-	SvgParser.prototype.config = function(config){
+	config(config){
 		this.conf.tolerance = config.tolerance;
 	}
 	
-	SvgParser.prototype.load = function(svgString){
+	load(svgString){
 	
 		if(!svgString || typeof svgString !== 'string'){
 			throw Error('invalid SVG string');
@@ -59,7 +58,7 @@
 	}
 	
 	// use the utility functions in this class to prepare the svg for CAD-CAM/nest related operations
-	SvgParser.prototype.cleanInput = function(){
+	cleanInput(){
 	
 		// apply any transformations, so that all path positions etc will be in the same coordinate space
 		this.applyTransform(this.svgRoot);
@@ -78,7 +77,7 @@
 	}
 	
 	// return style node, if any
-	SvgParser.prototype.getStyle = function(){
+	getStyle(){
 		if(!this.svgRoot){
 			return false;
 		}
@@ -94,7 +93,7 @@
 	
 	// set the given path as absolute coords (capital commands)
 	// from http://stackoverflow.com/a/9677915/433888
-	SvgParser.prototype.pathToAbsolute = function(path){
+	pathToAbsolute(path){
 		if(!path || path.tagName != 'path'){
 			throw Error('invalid path');
 		}
@@ -137,7 +136,7 @@
 	
 	// takes an SVG transform string and returns corresponding SVGMatrix
 	// from https://github.com/fontello/svgpath
-	SvgParser.prototype.transformParse = function(transformString){
+	transformParse(transformString){
 		var operations = {
 			matrix: true,
 			scale: true,
@@ -220,7 +219,7 @@
 	}
 	
 	// recursively apply the transform property to the given element
-	SvgParser.prototype.applyTransform = function(element, globalTransform){
+	applyTransform(element, globalTransform){
 		
 		globalTransform = globalTransform || '';
 
@@ -450,7 +449,7 @@
 	}
 	
 	// bring all child elements to the top level
-	SvgParser.prototype.flatten = function(element){
+	flatten(element){
 		
 		for(var i=0; i<element.childNodes.length; i++){
 			this.flatten(element.childNodes[i]);
@@ -465,7 +464,7 @@
 	
 	// remove all elements with tag name not in the whitelist
 	// use this to remove <text>, <g> etc that don't represent shapes
-	SvgParser.prototype.filter = function(whitelist, element){
+	filter(whitelist, element){
 		if(!whitelist || whitelist.length == 0){
 			throw Error('invalid whitelist');
 		}
@@ -482,7 +481,7 @@
 	}
 	
 	// split a compound path (paths with M, m commands) into an array of paths
-	SvgParser.prototype.splitPath = function(path){
+	splitPath(path){
 		if(!path || path.tagName != 'path' || !path.parentElement){
 			return false;
 		}
@@ -562,7 +561,7 @@
 	}
 	
 	// recursively run the given function on the given element
-	SvgParser.prototype.recurse = function(element, func){
+	recurse(element, func){
 		// only operate on original DOM tree, ignore any children that are added. Avoid infinite loops
 		var children = Array.prototype.slice.call(element.childNodes);
 		for(var i=0; i<children.length; i++){
@@ -573,7 +572,7 @@
 	}
 	
 	// return a polygon from the given SVG element in the form of an array of points
-	SvgParser.prototype.polygonify = function(element){
+	polygonify(element){
 		var poly = [];
 		var i;
 
@@ -779,15 +778,4 @@
 		return poly;
 	};
 	
-	// expose public methods
-	var parser = new SvgParser();
-	
-	root.SvgParser = {
-		config: parser.config.bind(parser),
-		load: parser.load.bind(parser),
-		getStyle: parser.getStyle.bind(parser),
-		clean: parser.cleanInput.bind(parser),
-		polygonify: parser.polygonify.bind(parser)
-	};
-	
-}(window));
+}
