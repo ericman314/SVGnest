@@ -24,6 +24,23 @@ export function CombinePolys(polys) {
 
   // We assume nothing. We just examine the two endpoints of each polyline, and if the points are equal (or very, very close) we stitch them together.
 
+  // Remove duplicate vertices (sometimes it can happen)
+  for (var i = poly.polylines.length-1; i >= 0; i--) {
+    const pi = poly.polylines[i]
+    for (var j = pi.vertices.length - 1; j >= 1; j--) {
+      let ei0 = pi.vertices[j]
+      let ei1 = pi.vertices[j - 1]
+      if (nearlyEqual(ei0[0], ei1[0]) && nearlyEqual(ei0[1], ei1[1])) {
+        pi.vertices.splice(j, 1)
+      }
+    }
+    // If number of vertices is less than 2, remove the polyline
+    
+    if (pi.vertices.length < 2) {
+      poly.polylines.splice(i, 1)
+    }
+  }
+
   // Traverse arrays in reverse order, always removing index j (which is larger than i), so that for-loop can proceed normally even when removing items from the array
   for (var i = poly.polylines.length - 2; i >= 0; i--) {
     for (var j = poly.polylines.length - 1; j > i; j--) {
@@ -33,37 +50,48 @@ export function CombinePolys(polys) {
       let ein = pi.vertices[pi.vertices.length - 1]
       let ej0 = pj.vertices[0]
       let ejn = pj.vertices[pj.vertices.length - 1]
-      console.log(i,j)
+      console.log(i, j)
       if (nearlyEqual(ein[0], ej0[0]) && nearlyEqual(ein[1], ej0[1])) {
         // Tail of i connects to head of j. Append j in order onto i, then remove j.
         console.log(`Case 1: Tail of ${i} connects to head of ${j}.`)
-        pi.vertices.splice(pi.vertices.length, 0, ...pj.vertices)
+        console.log(`pi contains ${pi.vertices.length} vertices and pj contains ${pj.vertices.length}.`)
+        console.log(pi)
+        console.log(pj)
+
+        pi.vertices.splice(pi.vertices.length, 0, ...pj.vertices.slice(1))
         poly.polylines.splice(j, 1)
+        console.log(pi)
+
       }
-      if (nearlyEqual(ejn[0], ei0[0]) && nearlyEqual(ejn[1], ei0[1])) {
+      else if (nearlyEqual(ejn[0], ei0[0]) && nearlyEqual(ejn[1], ei0[1])) {
         // Tail of j connects to head of i. Prepend j in order in front of i, then remove j.
         console.log(`Case 2: Tail of ${j} connects to head of ${i}.`)
-        pi.vertices.splice(0, 0, ...pj.vertices)
+        console.log(`pi contains ${pi.vertices.length} vertices and pj contains ${pj.vertices.length}.`)
+        console.log(pi)
+        console.log(pj)
+
+        pi.vertices.splice(0, 1, ...pj.vertices)
         poly.polylines.splice(j, 1)
+        console.log(pi)
       }
-      if (nearlyEqual(ei0[0], ej0[0]) && nearlyEqual(ei0[1], ej0[1])) {
+      else if (nearlyEqual(ei0[0], ej0[0]) && nearlyEqual(ei0[1], ej0[1])) {
         // Head of i connects to head of j. Reverse j in place and prepend in front of i, then remove j.
         console.log(`Case 3: Head of ${i} connects to head of ${j}.`)
         console.log(`pi contains ${pi.vertices.length} vertices and pj contains ${pj.vertices.length}.`)
         console.log(pi)
         console.log(pj)
-        pi.vertices.splice(0, 0, ...pj.vertices.reverse()) // Note: reverses in place
+        pi.vertices.splice(0, 0, ...pj.vertices.slice(1).reverse()) // Note: reverses in place
         poly.polylines.splice(j, 1)
         console.log(`After connecting, pi contains ${pi.vertices.length}.`)
         console.log(pi)
       }
-      if (nearlyEqual(ein[0], ejn[0]) && nearlyEqual(ein[1], ejn[1])) {
+      else if (nearlyEqual(ein[0], ejn[0]) && nearlyEqual(ein[1], ejn[1])) {
         // Tail of i connects to tail of j. Reverse j in place and append to i, then remove j.
         console.log(`Case 4: Tail of ${i} connects to tail of ${j}.`)
         console.log(`pi contains ${pi.vertices.length} vertices and pj contains ${pj.vertices.length}.`)
         console.log(pi)
         console.log(pj)
-        pi.vertices.splice(pi.vertices.length, 0, ...pj.vertices.reverse()) // Note: reverses in place
+        pi.vertices.splice(pi.vertices.length, 0, ...pj.vertices.reverse().slice(1)) // Note: reverses in place
         poly.polylines.splice(j, 1)
         console.log(`After connecting, pi contains ${pi.vertices.length}.`)
         console.log(pi)
@@ -77,5 +105,5 @@ export function CombinePolys(polys) {
 
 function nearlyEqual(a, b) {
   console.log(a, b)
-  return Math.abs(a - b) < 1e-6
+  return Math.abs(a - b) < 1e-4
 }

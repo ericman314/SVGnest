@@ -1,5 +1,6 @@
 import { PolyNest } from './polynest.mjs'
 import { CombinePolys } from './util/CombinePolys.mjs'
+import { CheckIntersection } from './util/CheckIntersection.mjs'
 import dxf from 'dxf'
 import * as fs from 'fs'
 import express from 'express'
@@ -17,10 +18,14 @@ app.get('/', function (req, res) {
 
 app.get('/polytest', function (req, res) {
 
-  fs.readFile('rope-bracket.dxf', (err, data) => {
+  fs.readFile('open-contours.dxf', (err, data) => {
     let polys = new dxf.Helper(data.toString()).toPolylines()
   
     let poly = CombinePolys(polys)
+
+    // TODO: Check for open contours
+
+    let result = CheckIntersection(poly)
   
     // s.addPoly(poly)
 
