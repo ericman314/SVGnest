@@ -4,11 +4,13 @@
   "description": "**SVGNest**: A browser-based vector nesting tool.",
   "main": "run-demo.mjs",
   "dependencies": {
-    "dxf": "^4.2.2"
+    "dxf": "^4.2.2",
+    "express": "^4.17.1"
   },
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node --experimental-modules run-demo.mjs"
   },
   "repository": {
     "type": "git",

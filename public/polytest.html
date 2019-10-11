@@ -1,0 +1,49 @@
+<body>
+  <canvas id="canvas1" width=640 height=480></canvas>
+  <canvas id="canvas2" width=640 height=480></canvas>
+
+  <script>
+    fetch('/polytest').then(data => data.json()).then(data => {
+      let polylines = data.polys.polylines
+
+      let ctx = document.getElementById('canvas1').getContext('2d')
+
+      // Draw original polys
+      let colors = ['red', 'green', 'blue', 'orange', 'brown', 'black', 'grey']      
+      for (let i = 0; i < polylines.length; i++) {
+        
+        ctx.beginPath()
+        ctx.moveTo(polylines[i].vertices[0][0], polylines[i].vertices[0][1])
+        for (let j = 1; j < polylines[i].vertices.length; j++) {
+          ctx.lineTo(polylines[i].vertices[j][0], polylines[i].vertices[j][1])
+        }
+        ctx.strokeStyle = colors[i % colors.length]
+        ctx.stroke()
+        
+        // console.log(polylines[i])
+      }
+
+      // Draw combined polys
+
+      ctx = document.getElementById('canvas2').getContext('2d')
+
+      polylines = data.poly.polylines
+
+      // Draw original polys
+      for (let i = 0; i < polylines.length; i++) {
+        
+        ctx.beginPath()
+        ctx.moveTo(polylines[i].vertices[0][0], polylines[i].vertices[0][1])
+        for (let j = 1; j < polylines[i].vertices.length; j++) {
+          ctx.lineTo(polylines[i].vertices[j][0], polylines[i].vertices[j][1])
+        }
+        ctx.strokeStyle = colors[i % colors.length]
+        ctx.stroke()
+        
+        console.log(polylines[i])
+      }
+
+
+    })
+  </script>
+</body>

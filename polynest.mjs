@@ -1,21 +1,26 @@
 'use strict';
 /*!
- * SvgNest
+ * PolyNest
  * Licensed under the MIT license
+ * 
+ * Original source obtained from SvgNest, licensed under the MIT license
  */
 
 import GeneticAlgorithm from './ga.mjs'
-import { Helper } from 'dxf'
+import GeometryUtil from './util/geometryutil.mjs'
+import dxf from 'dxf'
 
-export default class SvgNest {
+export class PolyNest {
 
   constructor() {
-    this.svg = null
 
     // keep a reference to any style nodes, to maintain color/fill info
     this.style = null
 
     this.parts = null
+
+    // 
+    this.polys = []
 
     this.tree = null
 
@@ -45,6 +50,20 @@ export default class SvgNest {
 
   // var self = this;
 
+  /**
+   * 
+   * @param poly A single polyline representing this part. The polyline must not contain any open contours or intersections.
+   */
+  addPoly(poly) {
+
+    // TODO: Check for continuity
+    // TODO: Check for intersections
+    // TODO LATER: Allow arrays of polylines. If there is more than one polyline, determine which one is on the "outside". (From a test point on a first polyline, calculate the angle swept by traversing a second polyline. If 0, the point is not contained in the second polyline.) If more than one is on the outside, hmm...?
+    
+    this.polys.push(poly)
+  }
+
+  // TODO: Too many side effects; we'll have to refactor this a bit
   parsesvg(svgstring) {
     // reset if in progress
     this.stop();
@@ -60,8 +79,12 @@ export default class SvgNest {
 
     this.svg = this.SvgParser.clean();
 
+    // Convert each child node in the svg to a polygon, structured so that "holes" are children polygons
+    // TODO: This will be replaced with dxf.Helper().toPolyline()
+    // We'll also have to handle holes, have to see how holes are currently handled in the nesting function
     this.tree = this.getParts(this.svg.childNodes);
 
+    // TODO: This won't be necessary
     //re-order elements such that deeper elements are on top, so they can be moused over
     function zorder(paths) {
       // depth-first
@@ -150,6 +173,7 @@ export default class SvgNest {
     offsetTree(tree, 0.5 * config.spacing, this.polygonOffset.bind(this));
 
     // offset tree recursively
+    // "Outset" is what is meant, not "offset". This routine could be cleaned up a bit.
     function offsetTree(t, offset, offsetFunction) {
       for (var i = 0; i < t.length; i++) {
         var offsetpaths = offsetFunction(t[i], offset);
@@ -595,11 +619,13 @@ export default class SvgNest {
 
   // assuming no intersections, return a tree where odd leaves are parts and even ones are holes
   // might be easier to use the DOM, but paths can't have paths as children. So we'll just make our own tree.
+   
   getParts(paths) {
 
     var i, j;
     var polygons = [];
 
+    // Convert each polygon into a polyline
     var numChildren = paths.length;
     for (i = 0; i < numChildren; i++) {
       var poly = this.svgParser.polygonify(paths[i]);
@@ -612,7 +638,10 @@ export default class SvgNest {
       }
     }
 
+
     // turn the list into a tree
+
+    // TODO: This won't be necessary....
     toTree(polygons);
 
     function toTree(list, idstart) {
@@ -725,6 +754,7 @@ export default class SvgNest {
   }
 
   // converts a polygon from normal float coordinates to integer coordinates used by clipper, as well as x/y -> X/Y
+  // OMG, why??? What is wrong with floating point arithmetic??
   svgToClipper(polygon) {
     var clip = [];
     for (var i = 0; i < polygon.length; i++) {

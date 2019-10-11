@@ -1,28 +1,33 @@
-// import SvgNest from './svgnest.mjs'
-import * as fs from 'fs'
-
-// let s = new SvgNest()
-
-
-// fs.readFile('demo.svg', (err, data) => {
-//   s.parsesvg(data.toString())
-//   console.log(s)
-// })
-
+import { PolyNest } from './polynest.mjs'
+import { CombinePolys } from './util/CombinePolys.mjs'
 import dxf from 'dxf'
+import * as fs from 'fs'
+import express from 'express'
+import path from 'path';
+const __dirname = path.resolve();
 
 
-fs.readFile('rope-bracket.dxf', (err, data) => {
+const app = express()
 
-  let x = new dxf.Helper(data.toString())
+app.use(express.static('public'))
 
-  let p = x.toPolylines()
-
-  for(var i=0; i<p.polylines.length; i++) {
-    let pl = p.polylines[i]
-    for(var j=0; j<pl.vertices.length; j++) {
-
-      console.log(pl.vertices[j][0], pl.vertices[j][1])
-    }
-  }
+app.get('/', function (req, res) {
+  res.sendFile(__dirname + '/public/polytest.html')
 })
+
+app.get('/polytest', function (req, res) {
+
+  fs.readFile('rope-bracket.dxf', (err, data) => {
+    let polys = new dxf.Helper(data.toString()).toPolylines()
+  
+    let poly = CombinePolys(polys)
+  
+    // s.addPoly(poly)
+
+    res.json({ polys: polys, poly: poly })
+  })
+
+})
+
+ 
+app.listen(3000)
