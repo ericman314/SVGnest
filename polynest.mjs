@@ -6,25 +6,24 @@
  * Original source obtained from SvgNest, licensed under the MIT license
  */
 
-import GeneticAlgorithm from './ga.mjs'
-import GeometryUtil from './util/geometryutil.mjs'
+import { GeneticAlgorithm } from './ga.mjs'
+import { GeometryUtil } from './util/geometryutil.mjs'
 import dxf from 'dxf'
 
 export class PolyNest {
 
   constructor() {
 
-    // keep a reference to any style nodes, to maintain color/fill info
-    this.style = null
-
     this.parts = null
 
-    // 
+    // The list of closed, contiguous polylines that we want to nest.
     this.polys = []
 
+    // A bin, in the form of a polyline, to nest the polys in
+    this.bin = null;
+    
     this.tree = null
 
-    this.bin = null;
     this.binPolygon = null;
     this.binBounds = null;
     this.nfpCache = {};
@@ -61,42 +60,6 @@ export class PolyNest {
     // TODO LATER: Allow arrays of polylines. If there is more than one polyline, determine which one is on the "outside". (From a test point on a first polyline, calculate the angle swept by traversing a second polyline. If 0, the point is not contained in the second polyline.) If more than one is on the outside, hmm...?
     
     this.polys.push(poly)
-  }
-
-  // TODO: Too many side effects; we'll have to refactor this a bit
-  parsesvg(svgstring) {
-    // reset if in progress
-    this.stop();
-
-    this.bin = null;
-    this.binPolygon = null;
-    this.tree = null;
-
-    // parse svg
-    this.svg = this.svgParser.load(svgstring);
-
-    this.style = this.svgParser.getStyle();
-
-    this.svg = this.SvgParser.clean();
-
-    // Convert each child node in the svg to a polygon, structured so that "holes" are children polygons
-    // TODO: This will be replaced with dxf.Helper().toPolyline()
-    // We'll also have to handle holes, have to see how holes are currently handled in the nesting function
-    this.tree = this.getParts(this.svg.childNodes);
-
-    // TODO: This won't be necessary
-    //re-order elements such that deeper elements are on top, so they can be moused over
-    function zorder(paths) {
-      // depth-first
-      var length = paths.length;
-      for (var i = 0; i < length; i++) {
-        if (paths[i].children && paths[i].children.length > 0) {
-          zorder(paths[i].children);
-        }
-      }
-    }
-
-    return this.svg;
   }
 
   setbin(element) {
@@ -154,21 +117,27 @@ export class PolyNest {
   // progressCallback is called when progress is made
   // displayCallback is called when a new placement has been made
   start(progressCallback, displayCallback) {
-    if (!svg || !bin) {
-      return false;
+
+    if (this.polys.length === 0) {
+      throw new Error('No parts to nest.')
     }
 
-    
-    parts = Array.prototype.slice.call(svg.childNodes);
-    var binindex = parts.indexOf(bin);
-
-    if (binindex >= 0) {
-      // don't process bin as a part of the tree
-      parts.splice(binindex, 1);
+    if (!this.bin) {
+      throw new Error('No bin has been defined.')
     }
 
-    // build tree without bin
-    tree = this.getParts(parts.slice(0));
+    // parts = Array.prototype.slice.call(svg.childNodes);
+    // var binindex = parts.indexOf(bin);
+
+    // if (binindex >= 0) {
+    //   // don't process bin as a part of the tree
+    //   parts.splice(binindex, 1);
+    // }
+
+    // TODO: items in tree can have children, which might be useful in the future if there are parts with holes
+    this.tree = polys.slice()
+
+    // For each poly, create an outsetPoly
 
     offsetTree(tree, 0.5 * config.spacing, this.polygonOffset.bind(this));
 
@@ -254,6 +223,8 @@ export class PolyNest {
       }
     }
 
+    // TODO: Do this synchronously for now, until we get it working
+
     var self = this;
     this.working = false;
 
@@ -268,31 +239,14 @@ export class PolyNest {
   }
 
   launchWorkers(tree, binPolygon, config, progressCallback, displayCallback) {
-    function shuffle(array) {
-      var currentIndex = array.length, temporaryValue, randomIndex;
-
-      // While there remain elements to shuffle...
-      while (0 !== currentIndex) {
-
-        // Pick a remaining element...
-        randomIndex = Math.floor(Math.random() * currentIndex);
-        currentIndex -= 1;
-
-        // And swap it with the current element.
-        temporaryValue = array[currentIndex];
-        array[currentIndex] = array[randomIndex];
-        array[randomIndex] = temporaryValue;
-      }
-
-      return array;
-    }
-
+    
     var i, j;
 
     if (GA === null) {
       // initiate new GA
       var adam = tree.slice(0);
 
+      // TODO: Seed by size of bounding box, not area
       // seed with decreasing area
       adam.sort(function (a, b) {
         return Math.abs(GeometryUtil.polygonArea(b)) - Math.abs(GeometryUtil.polygonArea(a));
@@ -616,88 +570,6 @@ export class PolyNest {
       console.log(err);
     });
   }
-
-  // assuming no intersections, return a tree where odd leaves are parts and even ones are holes
-  // might be easier to use the DOM, but paths can't have paths as children. So we'll just make our own tree.
-   
-  getParts(paths) {
-
-    var i, j;
-    var polygons = [];
-
-    // Convert each polygon into a polyline
-    var numChildren = paths.length;
-    for (i = 0; i < numChildren; i++) {
-      var poly = this.svgParser.polygonify(paths[i]);
-      poly = this.cleanPolygon(poly);
-
-      // todo: warn user if poly could not be processed and is excluded from the nest
-      if (poly && poly.length > 2 && Math.abs(GeometryUtil.polygonArea(poly)) > config.curveTolerance * config.curveTolerance) {
-        poly.source = i;
-        polygons.push(poly);
-      }
-    }
-
-
-    // turn the list into a tree
-
-    // TODO: This won't be necessary....
-    toTree(polygons);
-
-    function toTree(list, idstart) {
-      var parents = [];
-      var i, j;
-
-      // assign a unique id to each leaf
-      var id = idstart || 0;
-
-      for (i = 0; i < list.length; i++) {
-        var p = list[i];
-
-        var ischild = false;
-        for (j = 0; j < list.length; j++) {
-          if (j == i) {
-            continue;
-          }
-          if (GeometryUtil.pointInPolygon(p[0], list[j]) === true) {
-            if (!list[j].children) {
-              list[j].children = [];
-            }
-            list[j].children.push(p);
-            p.parent = list[j];
-            ischild = true;
-            break;
-          }
-        }
-
-        if (!ischild) {
-          parents.push(p);
-        }
-      }
-
-      for (i = 0; i < list.length; i++) {
-        if (parents.indexOf(list[i]) < 0) {
-          list.splice(i, 1);
-          i--;
-        }
-      }
-
-      for (i = 0; i < parents.length; i++) {
-        parents[i].id = id;
-        id++;
-      }
-
-      for (i = 0; i < parents.length; i++) {
-        if (parents[i].children) {
-          id = toTree(parents[i].children, id);
-        }
-      }
-
-      return id;
-    };
-
-    return polygons;
-  };
 
   // use the clipper library to return an offset to the given polygon. Positive offset expands the polygon, negative contracts
   // note that this returns an array of polygons

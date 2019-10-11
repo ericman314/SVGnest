@@ -4,7 +4,7 @@
  * Licensed under the MIT license
  */
 
-export default class GeneticAlgorithm {
+export class GeneticAlgorithm {
 
   constructor(adam, bin, config) {
 

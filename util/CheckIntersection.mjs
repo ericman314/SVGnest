@@ -6,11 +6,11 @@
 export function CheckIntersection(polys) {
 
   // Randomly reverse some polylines to test robustness
-  for (let i = 0; i < polys.polylines.length; i++) {
-    if (Math.random() < 0.5) {
-      polys.polylines[i].vertices.reverse()
-    }
-  }
+  // for (let i = 0; i < polys.polylines.length; i++) {
+  //   if (Math.random() < 0.5) {
+  //     polys.polylines[i].vertices.reverse()
+  //   }
+  // }
 
   const intersections = []
 

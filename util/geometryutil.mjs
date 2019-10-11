@@ -151,7 +151,7 @@ function _lineIntersect(A, B, E, F, infinite) {
 }
 
 
-let GeometryUtil = {
+export const GeometryUtil = {
 
 
   withinDistance: _withinDistance,
@@ -1889,4 +1889,3 @@ let GeometryUtil = {
   }
 };
 
-export default GeometryUtil 
